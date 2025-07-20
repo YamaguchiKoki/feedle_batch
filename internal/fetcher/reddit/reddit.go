@@ -1,4 +1,4 @@
-package fetcher
+package reddit
 
 import (
 	"encoding/json"
@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/YamaguchiKoki/feedle_batch/internal/fetcher"
 	"github.com/YamaguchiKoki/feedle_batch/internal/models"
 	"github.com/samber/lo"
 )
@@ -42,20 +43,32 @@ type RedditResponse struct {
 
 type RedditFetcher struct {
 	client    HTTPClient
+	auth      *RedditAuth
 	baseURL   string
 	userAgent string
 }
 
-func NewRedditFetcher(client HTTPClient) *RedditFetcher {
+func NewRedditFetcher(client HTTPClient, clientID, clientSecret, username string) *RedditFetcher {
 	if client == nil {
 		client = &http.Client{
 			Timeout: 10 * time.Second,
 		}
 	}
+	var auth *RedditAuth
+	if clientID != "" && clientSecret != "" {
+		auth = NewRedditAuth(clientID, clientSecret, username)
+	}
+
+	userAgent := fmt.Sprintf("golang:feedle-batch:v1.0.0 (by /u/%s)", username)
+	if username == "" {
+		userAgent = "golang:feedle-batch:v1.0.0"
+	}
+
 	return &RedditFetcher{
 		client:    client,
-		baseURL:   "https://www.reddit.com",
-		userAgent: "Feedle/1.0 (https://github.com/YamaguchiKoki/feedle_batch)",
+		auth:      auth,
+		baseURL:   "https://oauth.reddit.com",
+		userAgent: userAgent,
 	}
 }
 
@@ -63,7 +76,7 @@ func (rf *RedditFetcher) Name() string {
 	return "reddit"
 }
 
-func (rf *RedditFetcher) Fetch(config FetchConfig) ([]*models.FetchedData, error) {
+func (rf *RedditFetcher) Fetch(config fetcher.FetchConfig) ([]*models.FetchedData, error) {
 	if len(config.Reddit.Subreddits) == 0 && len(config.Keywords) == 0 {
 		return nil, fmt.Errorf("no subreddits or keywords provided")
 	}
@@ -111,6 +124,21 @@ func (rf *RedditFetcher) fetchFromURL(url string) ([]*models.FetchedData, error)
 	}
 
 	req.Header.Set("User-Agent", rf.userAgent)
+
+	// 認証が設定されている場合
+	if rf.auth != nil {
+		token, err := rf.auth.GetAccessToken()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get access token: %w", err)
+		}
+		req.Header.Set("Authorization", "Bearer "+token)
+
+		// 認証時はURLをoauth.reddit.comに変更
+		if !strings.Contains(url, "oauth.reddit.com") {
+			url = strings.Replace(url, "www.reddit.com", "oauth.reddit.com", 1)
+			req.URL, _ = req.URL.Parse(url)
+		}
+	}
 
 	resp, err := rf.client.Do(req)
 	if err != nil {

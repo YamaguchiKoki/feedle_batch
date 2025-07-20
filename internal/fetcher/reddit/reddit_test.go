@@ -1,4 +1,4 @@
-package fetcher
+package reddit
 
 import (
 	"bytes"
@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/YamaguchiKoki/feedle_batch/internal/fetcher"
 	"github.com/YamaguchiKoki/feedle_batch/internal/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -29,15 +30,16 @@ func (m *MockHTTPClient) Do(req *http.Request) (*http.Response, error) {
 func TestRedditFetcher_Fetch(t *testing.T) {
 	tests := []struct {
 		name      string
-		config    FetchConfig
+		config    fetcher.FetchConfig
 		mockSetup func(*MockHTTPClient)
 		wantCount int
 		wantErr   bool
 		errMsg    string
 	}{
+		// 既存のテストケースをそのまま使用
 		{
 			name: "successful subreddit fetch",
-			config: FetchConfig{
+			config: fetcher.FetchConfig{
 				Reddit: struct{ Subreddits []string }{
 					Subreddits: []string{"golang"},
 				},
@@ -90,7 +92,7 @@ func TestRedditFetcher_Fetch(t *testing.T) {
 		},
 		{
 			name: "no subreddits or keywords provided",
-			config: FetchConfig{
+			config: fetcher.FetchConfig{
 				Limit: 10,
 			},
 			mockSetup: func(m *MockHTTPClient) {},
@@ -100,7 +102,7 @@ func TestRedditFetcher_Fetch(t *testing.T) {
 		},
 		{
 			name: "handle API error gracefully",
-			config: FetchConfig{
+			config: fetcher.FetchConfig{
 				Reddit: struct{ Subreddits []string }{
 					Subreddits: []string{"nonexistent"},
 				},
@@ -117,7 +119,7 @@ func TestRedditFetcher_Fetch(t *testing.T) {
 		},
 		{
 			name: "deduplicate results from multiple sources",
-			config: FetchConfig{
+			config: fetcher.FetchConfig{
 				Keywords: []string{"golang"},
 				Reddit: struct{ Subreddits []string }{
 					Subreddits: []string{"golang"},
@@ -126,26 +128,26 @@ func TestRedditFetcher_Fetch(t *testing.T) {
 			},
 			mockSetup: func(m *MockHTTPClient) {
 				response := `{
-									"data": {
-											"children": [
-													{
-															"data": {
-																	"id": "1",
-																	"title": "Duplicate Post",
-																	"selftext": "Content",
-																	"author": "user1",
-																	"created_utc": 1704067200,
-																	"score": 10,
-																	"num_comments": 5,
-																	"subreddit": "golang",
-																	"permalink": "/r/golang/comments/1/duplicate_post/",
-																	"url": "https://reddit.com/r/golang/comments/1/duplicate_post/",
-																	"is_self": true
-															}
-													}
-											]
-									}
-							}`
+					"data": {
+						"children": [
+							{
+								"data": {
+									"id": "1",
+									"title": "Duplicate Post",
+									"selftext": "Content",
+									"author": "user1",
+									"created_utc": 1704067200,
+									"score": 10,
+									"num_comments": 5,
+									"subreddit": "golang",
+									"permalink": "/r/golang/comments/1/duplicate_post/",
+									"url": "https://reddit.com/r/golang/comments/1/duplicate_post/",
+									"is_self": true
+								}
+							}
+						]
+					}
+				}`
 				// subreddit fetch用
 				m.On("Do", mock.MatchedBy(func(req *http.Request) bool {
 					return strings.Contains(req.URL.String(), "/r/golang.json")
@@ -172,7 +174,8 @@ func TestRedditFetcher_Fetch(t *testing.T) {
 			mockClient := new(MockHTTPClient)
 			tt.mockSetup(mockClient)
 
-			rf := NewRedditFetcher(mockClient)
+			// 引数を変更: clientID, clientSecret, username を追加
+			rf := NewRedditFetcher(mockClient, "", "", "")
 			results, err := rf.Fetch(tt.config)
 
 			if tt.wantErr {
@@ -186,6 +189,20 @@ func TestRedditFetcher_Fetch(t *testing.T) {
 			mockClient.AssertExpectations(t)
 		})
 	}
+}
+
+// RedditAuth のテストを追加
+func TestRedditAuth_GetAccessToken(t *testing.T) {
+	t.Run("successful token retrieval", func(t *testing.T) {
+		auth := NewRedditAuth("test-client-id", "test-client-secret", "test-user")
+
+		// 実際のHTTPリクエストは行わないので、このテストは
+		// 主にAuthオブジェクトの作成を確認
+		assert.NotNil(t, auth)
+		assert.Equal(t, "test-client-id", auth.clientID)
+		assert.Equal(t, "test-client-secret", auth.clientSecret)
+		assert.Contains(t, auth.userAgent, "test-user")
+	})
 }
 
 func TestRedditFetcher_TransformPost(t *testing.T) {

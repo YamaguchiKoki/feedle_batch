@@ -3,9 +3,11 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/YamaguchiKoki/feedle_batch/internal/config"
 	"github.com/YamaguchiKoki/feedle_batch/internal/fetcher"
+	"github.com/YamaguchiKoki/feedle_batch/internal/fetcher/reddit"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 	"github.com/supabase-community/supabase-go"
@@ -23,6 +25,9 @@ var fetcherRegistry *fetcher.Registry
 
 var fetchCmd = &cobra.Command{
 	Use: "fetch",
+	PreRun: func(cmd *cobra.Command, args []string) {
+		initializeFetchers()
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		cfg := config.Load()
 
@@ -112,15 +117,23 @@ func buildFetchConfig(sourceName string) fetcher.FetchConfig {
 	return config
 }
 
+func initializeFetchers() {
+	fetcherRegistry = fetcher.NewRegistry()
+
+	redditClientID := os.Getenv("REDDIT_CLIENT_ID")
+	redditClientSecret := os.Getenv("REDDIT_CLIENT_SECRET")
+	redditUsername := os.Getenv("REDDIT_USERNAME")
+
+	fetcherRegistry.Register(reddit.NewRedditFetcher(
+		nil,
+		redditClientID,
+		redditClientSecret,
+		redditUsername,
+	))
+}
+
 func init() {
 	rootCmd.AddCommand(fetchCmd)
-
-	// フェッチャーを登録
-	fetcherRegistry = fetcher.NewRegistry()
-	fetcherRegistry.Register(fetcher.NewRedditFetcher(nil))
-	// 将来的に追加
-	// fetcherRegistry.Register(fetcher.NewHackerNewsFetcher())
-	// fetcherRegistry.Register(fetcher.NewYouTubeFetcher())
 
 	fetchCmd.Flags().StringSliceVarP(&sources, "sources", "s", []string{}, "Sources to fetch from (default: all)")
 	fetchCmd.Flags().StringSliceVar(&subreddits, "subreddits", []string{}, "Reddit subreddits to fetch")
