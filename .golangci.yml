@@ -1,0 +1,126 @@
+version: "2"
+run:
+  concurrency: 2
+  issues-exit-code: 0
+  allow-parallel-runners: true
+
+output:
+  formats:
+    text:
+      path: stdout
+      print-linter-name: true
+      print-issued-lines: true
+  path-prefix: ""
+
+linters:
+  default: none
+  enable:
+    - errcheck
+    - gocognit
+    - gocritic
+    - godox
+    - gosec
+    - govet
+    - ineffassign
+    - makezero
+    - misspell
+    - nolintlint
+    - revive
+    - staticcheck
+    - unparam
+    - unused
+  settings:
+    errcheck:
+      check-type-assertions: true
+      exclude-functions:
+        - (http://github.com/labstack/echo.Context).JSON
+        - (http://github.com/labstack/echo/v4.Context).JSON
+    gocritic:
+      disabled-checks:
+        - regexpMust
+        - ifElseChain
+        - assignOp
+        - singleCaseSwitch
+        - elseif
+      enabled-tags:
+        - performance
+      disabled-tags:
+        - experimental
+      settings:
+        captLocal:
+          paramsOnly: true
+        hugeParam:
+          sizeThreshold: 256
+        rangeExprCopy:
+          sizeThreshold: 256
+        rangeValCopy:
+          sizeThreshold: 256
+    staticcheck:
+      checks:
+        - "all"
+        - "-ST1000"
+        - "-ST1003"
+        - "-ST1020"
+        - "-ST1021"
+        - "-ST1022"
+        - "-QF1001"
+        - "-QF1003"
+        - "-QF1004"
+        - "-QF1005"
+        - "-QF1008"
+        - "-QF1012"
+    godox:
+      keywords:
+        - FIX
+        - FIXME
+    gosec:
+      excludes:
+        - G601
+    makezero:
+      always: false
+    nolintlint:
+      allow-unused: false
+      require-explanation: true
+      require-specific: true
+    revive:
+      enable-all-rules: false
+      rules:
+        - name: context-as-argument
+          severity: warning
+          arguments:
+            - allow-types-before: "*testing.T,*http://github.com/user/repo/testing.Harness"
+        - name: defer
+          severity: warning
+          arguments:
+            - ["call-chain", "loop", "method-call", "recover", "immediate-recover", "return"]
+        - name: get-return
+          severity: warning
+          disabled: false
+        - name: optimize-operands-order
+          severity: warning
+        - name: string-of-int
+          severity: warning
+        - name: time-equal
+          severity: warning
+        - name: waitgroup-by-value
+          severity: warning
+    unparam:
+      check-exported: false
+  exclusions:
+    generated: lax
+    paths:
+      - scripts
+    rules:
+      - linters:
+          - govet
+        text: 'shadow: declaration of "err" shadows declaration at'
+      # テストファイルのerrcheckを除外
+      - linters:
+          - errcheck
+        path: '_test\.go$'
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  new-from-rev: HEAD~1
+  new: false

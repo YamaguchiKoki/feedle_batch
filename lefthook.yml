@@ -1,0 +1,26 @@
+pre-push:
+  jobs:
+    - name: packages audit
+      tags:
+        - frontend
+        - security
+      run: yarn audit
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: gofmt
+      glob: "*.go"
+      run: gofmt -w {staged_files}
+
+    - name: golangci-lint
+      glob: "*.go"
+      run: golangci-lint run --fix {staged_files}
+
+    - name: govet
+      files: git ls-files -m
+      glob: "*.go"
+      run: go vet {files}
+
+    - name: test-short
+      run: go test -short ./...
