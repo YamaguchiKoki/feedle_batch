@@ -1,0 +1,5 @@
+# <emoji> <type>(<scope>): <subject>
+
+# ✨ feat       🐛 fix        ♻️  refactor    ✅ test
+# 📝 docs       👷 ci         🔧 config      ⚡️ perf
+# 🚀 deploy     🔒 security   🎉 init        🚧 wip
