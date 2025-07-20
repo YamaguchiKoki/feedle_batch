@@ -1,0 +1,66 @@
+name: Scheduled Batch Run
+
+on:
+  # 定期実行（1日1回、日本時間 9:00 = UTC 0:00）
+  schedule:
+    - cron: '0 0 * * *'
+
+  # 手動実行（動作確認用）
+  workflow_dispatch:
+    inputs:
+      subreddits:
+        description: 'Reddit subreddits (comma-separated)'
+        required: false
+        default: 'golang,programming'
+      dry-run:
+        description: 'Run in dry-run mode'
+        required: false
+        type: boolean
+
+jobs:
+  fetch-data:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Build
+        run: go build -o feedle
+
+      - name: Run batch (dry-run for now)
+        run: |
+          echo "=== Starting Feedle Batch ==="
+          echo "Time: $(date)"
+          echo "Subreddits: ${{ github.event.inputs.subreddits || 'golang,programming' }}"
+          echo "Dry-run: ${{ github.event.inputs.dry-run || 'true' }}"
+          echo "=========================="
+
+          ./feedle fetch \
+            --subreddits "${{ github.event.inputs.subreddits || 'golang,programming' }}" \
+            --dry-run
+
+      - name: Upload logs (if any)
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: batch-logs-${{ github.run_number }}
+          path: |
+            *.log
+          retention-days: 7
