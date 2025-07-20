@@ -54,6 +54,10 @@ jobs:
         run: go build -o feedle
 
       - name: Run batch (dry-run for now)
+        env:
+          REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
+          REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
+          REDDIT_USERNAME: ${{ secrets.REDDIT_USERNAME }}
         run: |
           echo "=== Starting Feedle Batch ==="
           echo "Time: $(date)"
