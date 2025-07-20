@@ -1,7 +1,7 @@
 # CLAUDE.md - Feedle_batch
 
 ## プロジェクト概要
-Feedle_batchは、複数のソーシャルメディアプラットフォーム（Twitter、YouTube、Instagram、Reddit、Hacker News etc...）から情報を収集し、Supabaseデータベースに保存するGoベースのバッチ処理システムです。
+Feedle_batchは、複数のソーシャルメディアプラットフォーム（Twitter、YouTube、Instagram、Reddit、Hacker News etc...）から情報を収集し、Supabaseデータベースに保存するGoベースのバッチ処理システムです。GHA上のcronジョブとして起動します。
 
 ## Conversation Guidelines
 
