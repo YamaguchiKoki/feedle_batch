@@ -16,6 +16,15 @@ on:
         description: 'Run in dry-run mode'
         required: false
         type: boolean
+      branch:
+        description: 'Branch to run'
+        required: true
+        default: 'main'
+        type: choice
+        options:
+          - main
+          - develop
+          - staging
 
 jobs:
   fetch-data:
@@ -31,7 +40,7 @@ jobs:
           go-version: '1.24'
 
       - name: Cache Go modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
@@ -58,7 +67,7 @@ jobs:
 
       - name: Upload logs (if any)
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: batch-logs-${{ github.run_number }}
           path: |
