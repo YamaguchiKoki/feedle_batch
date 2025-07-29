@@ -1,0 +1,14 @@
+{
+	"files.associations": {
+		"wrangler.json": "jsonc"
+	},
+	"cSpell.userWords": [
+		"supabase",
+		"feedle",
+		"sonner",
+		"nuqs",
+		"shadcn",
+		"lefthook",
+		"subreddits"
+	],
+}

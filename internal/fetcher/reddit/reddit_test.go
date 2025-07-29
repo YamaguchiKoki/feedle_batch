@@ -241,7 +241,7 @@ func TestRedditFetcher_TransformPost(t *testing.T) {
 					"comments": 10,
 				},
 				RawData: map[string]interface{}{
-					"reddit_id": "abc123",
+					"id": "abc123",
 					"is_self":   true,
 				},
 			},
@@ -276,7 +276,7 @@ func TestRedditFetcher_TransformPost(t *testing.T) {
 					"comments": 25,
 				},
 				RawData: map[string]interface{}{
-					"reddit_id": "xyz789",
+					"id": "xyz789",
 					"is_self":   false,
 				},
 			},
@@ -310,15 +310,15 @@ func TestRedditFetcher_DeduplicateResults(t *testing.T) {
 	input := []*models.FetchedData{
 		{
 			Title:   "First",
-			RawData: map[string]interface{}{"reddit_id": "1"},
+			RawData: map[string]interface{}{"id": "1"},
 		},
 		{
 			Title:   "Second",
-			RawData: map[string]interface{}{"reddit_id": "2"},
+			RawData: map[string]interface{}{"id": "2"},
 		},
 		{
 			Title:   "Duplicate of First",
-			RawData: map[string]interface{}{"reddit_id": "1"},
+			RawData: map[string]interface{}{"id": "1"},
 		},
 		{
 			Title:   "No Reddit ID",

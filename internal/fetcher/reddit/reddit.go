@@ -186,8 +186,8 @@ func (rf *RedditFetcher) transformPost(post RedditPost) *models.FetchedData {
 		Tags:      []string{data.Subreddit},
 		FetchedAt: time.Now(),
 		RawData: map[string]interface{}{
-			"reddit_id": data.ID,
-			"is_self":   data.IsSelf,
+			"id":      data.ID,
+			"is_self": data.IsSelf,
 		},
 	}
 
@@ -202,7 +202,7 @@ func (rf *RedditFetcher) deduplicateResults(results []*models.FetchedData) []*mo
 	seen := make(map[string]bool)
 
 	return lo.Filter(results, func(item *models.FetchedData, _ int) bool {
-		redditID, ok := item.RawData["reddit_id"].(string)
+		redditID, ok := item.RawData["id"].(string)
 		if !ok || redditID == "" {
 			return true
 		}
