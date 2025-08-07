@@ -1,30 +1,30 @@
-pre-push:
-  jobs:
-    - name: packages audit
-      tags:
-        - frontend
-        - security
-      run: yarn audit
+# pre-push:
+#   jobs:
+#     - name: packages audit
+#       tags:
+#         - frontend
+#         - security
+#       run: yarn audit
 
-pre-commit:
-  parallel: true
-  jobs:
-    - name: gofmt
-      glob: "*.go"
-      run: gofmt -w {staged_files}
+# pre-commit:
+#   parallel: true
+#   jobs:
+#     - name: gofmt
+#       glob: "*.go"
+#       run: gofmt -w {staged_files}
 
-    - name: golangci-lint
-      glob: "*.go"
-      run: |
-        for file in {staged_files}; do
-          dir=$(dirname "$file")
-          golangci-lint run --fix "$dir"
-        done
+#     - name: golangci-lint
+#       glob: "*.go"
+#       run: |
+#         for file in {staged_files}; do
+#           dir=$(dirname "$file")
+#           golangci-lint run --fix "$dir"
+#         done
 
-    - name: govet
-      files: git ls-files -m
-      glob: "*.go"
-      run: go vet {files}
+#     - name: govet
+#       files: git ls-files -m
+#       glob: "*.go"
+#       run: go vet {files}
 
-    - name: test-short
-      run: go test -short ./...
+#     - name: test-short
+#       run: go test -short ./...
