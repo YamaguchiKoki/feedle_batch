@@ -22,9 +22,8 @@ pre-commit:
         done
 
     - name: govet
-      files: git ls-files -m
       glob: "*.go"
-      run: go vet {files}
+      run: go vet ./...
 
     - name: test-short
       run: go test -short ./...
