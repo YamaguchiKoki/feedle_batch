@@ -1,30 +1,5 @@
 package fetcher
 
-import "github.com/YamaguchiKoki/feedle_batch/internal/models"
-
-type Fetcher interface {
-	Name() string
-
-	Fetch(config FetchConfig) ([]*models.FetchedData, error)
-}
-
-type FetchConfig struct {
-	// Common fields
-	Keywords []string
-	Limit    int
-
-	// Source-specific fields
-	Reddit struct {
-		Subreddits []string
-	}
-	YouTube struct {
-		ChannelIDs []string
-	}
-	HackerNews struct {
-		MinScore int
-	}
-}
-
 type Registry struct {
 	fetchers map[string]Fetcher
 }

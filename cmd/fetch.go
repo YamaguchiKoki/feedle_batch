@@ -5,9 +5,10 @@ import (
 	"log"
 	"time"
 
-	"github.com/YamaguchiKoki/feedle_batch/internal/di"
-	"github.com/YamaguchiKoki/feedle_batch/internal/usecase"
-	"github.com/samber/do/v2"
+	"github.com/YamaguchiKoki/feedle_batch/internal/adapter/fetcher"
+	"github.com/YamaguchiKoki/feedle_batch/internal/adapter/fetcher/reddit"
+	"github.com/YamaguchiKoki/feedle_batch/internal/config"
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 )
 
@@ -19,7 +20,6 @@ var (
 	dryRun     bool
 	configID   string
 )
-
 
 var fetchCmd = &cobra.Command{
 	Use:   "fetch",
@@ -81,7 +81,6 @@ var fetchCmd = &cobra.Command{
 		}
 	},
 }
-
 
 func init() {
 	rootCmd.AddCommand(fetchCmd)

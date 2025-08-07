@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/YamaguchiKoki/feedle_batch/internal/fetcher"
-	"github.com/YamaguchiKoki/feedle_batch/internal/models"
+	"github.com/YamaguchiKoki/feedle_batch/internal/adapter/fetcher"
+	"github.com/YamaguchiKoki/feedle_batch/internal/domain/model"
 	"github.com/samber/lo"
 )
 
@@ -76,12 +76,12 @@ func (rf *RedditFetcher) Name() string {
 	return "reddit"
 }
 
-func (rf *RedditFetcher) Fetch(config fetcher.FetchConfig) ([]*models.FetchedData, error) {
+func (rf *RedditFetcher) Fetch(config fetcher.FetchConfig) ([]*model.FetchedData, error) {
 	if len(config.Reddit.Subreddits) == 0 && len(config.Keywords) == 0 {
 		return nil, fmt.Errorf("no subreddits or keywords provided")
 	}
 
-	var allResults []*models.FetchedData
+	var allResults []*model.FetchedData
 
 	// Fetch from subreddits
 	for _, subreddit := range config.Reddit.Subreddits {
@@ -104,20 +104,20 @@ func (rf *RedditFetcher) Fetch(config fetcher.FetchConfig) ([]*models.FetchedDat
 		}
 	}
 
-	return rf.deduplicateResults(allResults), nil
+	return allResults, nil
 }
 
-func (rf *RedditFetcher) fetchSubreddit(subreddit string, limit int) ([]*models.FetchedData, error) {
+func (rf *RedditFetcher) fetchSubreddit(subreddit string, limit int) ([]*model.FetchedData, error) {
 	url := fmt.Sprintf("%s/r/%s.json?limit=%d&raw_json=1", rf.baseURL, subreddit, limit)
 	return rf.fetchFromURL(url)
 }
 
-func (rf *RedditFetcher) search(query string, limit int) ([]*models.FetchedData, error) {
+func (rf *RedditFetcher) search(query string, limit int) ([]*model.FetchedData, error) {
 	url := fmt.Sprintf("%s/search.json?q=%s&limit=%d&raw_json=1&sort=new", rf.baseURL, query, limit)
 	return rf.fetchFromURL(url)
 }
 
-func (rf *RedditFetcher) fetchFromURL(url string) ([]*models.FetchedData, error) {
+func (rf *RedditFetcher) fetchFromURL(url string) ([]*model.FetchedData, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
@@ -159,58 +159,28 @@ func (rf *RedditFetcher) fetchFromURL(url string) ([]*models.FetchedData, error)
 		return nil, fmt.Errorf("failed to decode Reddit response: %w", err)
 	}
 
-	results := lo.Map(redditResp.Data.Children, func(post RedditPost, _ int) *models.FetchedData {
+	results := lo.Map(redditResp.Data.Children, func(post RedditPost, _ int) *model.FetchedData {
 		return rf.transformPost(post)
 	})
 
-	return lo.Filter(results, func(item *models.FetchedData, _ int) bool {
+	return lo.Filter(results, func(item *model.FetchedData, _ int) bool {
 		return item != nil
 	}), nil
 }
 
-func (rf *RedditFetcher) transformPost(post RedditPost) *models.FetchedData {
+func (rf *RedditFetcher) transformPost(post RedditPost) *model.FetchedData {
 	data := post.Data
 	createdAt := time.Unix(int64(data.CreatedUTC), 0)
 
-	fetchedData := &models.FetchedData{
+	fetchedData := &model.FetchedData{
 		Title:       data.Title,
 		Content:     data.Selftext,
 		URL:         fmt.Sprintf("https://reddit.com%s", data.Permalink),
 		AuthorName:  data.Author,
-		AuthorID:    data.Author,
 		PublishedAt: &createdAt,
-		Engagement: map[string]interface{}{
-			"score":    data.Score,
-			"comments": data.NumComments,
-		},
-		Tags:      []string{data.Subreddit},
-		FetchedAt: time.Now(),
-		RawData: map[string]interface{}{
-			"id":      data.ID,
-			"is_self": data.IsSelf,
-		},
-	}
-
-	if !data.IsSelf && data.URL != "" && !strings.Contains(data.URL, "reddit.com") {
-		fetchedData.Media = []string{data.URL}
+		Tags:        []string{data.Subreddit},
+		FetchedAt:   time.Now(),
 	}
 
 	return fetchedData
-}
-
-func (rf *RedditFetcher) deduplicateResults(results []*models.FetchedData) []*models.FetchedData {
-	seen := make(map[string]bool)
-
-	return lo.Filter(results, func(item *models.FetchedData, _ int) bool {
-		redditID, ok := item.RawData["id"].(string)
-		if !ok || redditID == "" {
-			return true
-		}
-
-		if seen[redditID] {
-			return false
-		}
-		seen[redditID] = true
-		return true
-	})
 }
