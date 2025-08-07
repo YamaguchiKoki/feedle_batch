@@ -18,21 +18,21 @@ type FetchAndSaveUsecase struct {
 }
 
 func NewFetchAndSaveUsecase(
-    fetchConfigService *service.FetchConfigService,
-    dRepo output.FetchedDataRepository,
-    redditFetcher fetcher.Fetcher[model.RedditFetchConfigDetail],
+	fetchConfigService *service.FetchConfigService,
+	dRepo output.FetchedDataRepository,
+	redditFetcher fetcher.Fetcher[model.RedditFetchConfigDetail],
 ) *FetchAndSaveUsecase {
-    return &FetchAndSaveUsecase{
-        fetchConfigService: fetchConfigService,
-        dataRepository:     dRepo,
-        redditFetcher:      redditFetcher,
-    }
+	return &FetchAndSaveUsecase{
+		fetchConfigService: fetchConfigService,
+		dataRepository:     dRepo,
+		redditFetcher:      redditFetcher,
+	}
 }
 
 func (uc *FetchAndSaveUsecase) Execute(ctx context.Context) error {
 	enrichedConfigs, err := uc.fetchConfigService.GetActiveUsersEnrichedConfigs(ctx)
 	if err != nil {
-			return fmt.Errorf("failed to get enriched configs: %w", err)
+		return fmt.Errorf("failed to get enriched configs: %w", err)
 	}
 
 	for _, cfg := range enrichedConfigs {
@@ -53,10 +53,10 @@ func (uc *FetchAndSaveUsecase) Execute(ctx context.Context) error {
 			// 未対応のデータソースの場合
 			continue
 		}
-    }
-    return nil
+	}
+	return nil
 }
 
 func (uc *FetchAndSaveUsecase) saveData(ctx context.Context, configID uuid.UUID, data interface{}) error {
-    return nil
+	return nil
 }

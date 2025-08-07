@@ -7,12 +7,12 @@ import (
 )
 
 type FetchConfigDetail interface {
-    GetUserFetchConfigID() uuid.UUID
-    GetDataSourceID() string
+	GetUserFetchConfigID() uuid.UUID
+	GetDataSourceID() string
 }
 
 type RedditFetchConfigDetail struct {
-    ID                uuid.UUID `json:"id" db:"id"`
+	ID                uuid.UUID `json:"id" db:"id"`
 	UserFetchConfigID uuid.UUID `json:"user_fetch_config_id" db:"user_fetch_config_id"`
 	Subreddit         *string   `json:"subreddit" db:"subreddit"`
 	SortBy            string    `json:"sort_by" db:"sort_by"`
@@ -23,9 +23,9 @@ type RedditFetchConfigDetail struct {
 }
 
 func (r RedditFetchConfigDetail) GetUserFetchConfigID() uuid.UUID {
-    return r.UserFetchConfigID
+	return r.UserFetchConfigID
 }
 
 func (r RedditFetchConfigDetail) GetDataSourceID() string {
-    return "reddit"
+	return "reddit"
 }
