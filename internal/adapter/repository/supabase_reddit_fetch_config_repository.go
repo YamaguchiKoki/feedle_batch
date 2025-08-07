@@ -19,8 +19,8 @@ func NewSupabaseRedditFetchConfigRepository(client *supabase.Client) output.Redd
 	}
 }
 
-func (r *SupabaseRedditFetchConfigRepository) GetByUserFetchConfigID(ctx context.Context, userFetchConfigID uuid.UUID) (*model.RedditFetchConfig, error) {
-	var config model.RedditFetchConfig
+func (r *SupabaseRedditFetchConfigRepository) GetByUserFetchConfigID(ctx context.Context, userFetchConfigID uuid.UUID) (*model.RedditFetchConfigDetail, error) {
+	var config model.RedditFetchConfigDetail
 	_, err := r.client.From("reddit_fetch_configs").Select("*", "", false).Eq("user_fetch_config_id", userFetchConfigID.String()).Single().ExecuteTo(&config)
 	if err != nil {
 		return nil, err

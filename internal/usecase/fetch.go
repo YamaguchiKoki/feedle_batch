@@ -5,58 +5,58 @@ import (
 	"fmt"
 
 	"github.com/YamaguchiKoki/feedle_batch/internal/adapter/fetcher"
+	"github.com/YamaguchiKoki/feedle_batch/internal/domain/model"
+	"github.com/YamaguchiKoki/feedle_batch/internal/domain/service"
 	"github.com/YamaguchiKoki/feedle_batch/internal/port/output"
+	"github.com/google/uuid"
 )
 
 type FetchAndSaveUsecase struct {
-	userRepository              output.UserRepository
-	configRepository            output.FetchConfigRepository
-	dataRepository              output.FetchedDataRepository
-	dataSourceRepository        output.DataSourceRepository
-	redditFetchConfigRepository output.RedditFetchConfigRepository
-	fetcherRegistry             fetcher.Registry
+	fetchConfigService *service.FetchConfigService
+	dataRepository     output.FetchedDataRepository
+	redditFetcher      fetcher.Fetcher[model.RedditFetchConfigDetail]
 }
 
 func NewFetchAndSaveUsecase(
-	uRepo output.UserRepository,
-	cRepo output.FetchConfigRepository,
-	dRepo output.FetchedDataRepository,
-	dsRepo output.DataSourceRepository,
-	rRepo output.RedditFetchConfigRepository,
-	r fetcher.Registry) *FetchAndSaveUsecase {
-	return &FetchAndSaveUsecase{
-		userRepository:              uRepo,
-		configRepository:            cRepo,
-		dataRepository:              dRepo,
-		dataSourceRepository:        dsRepo,
-		redditFetchConfigRepository: rRepo,
-		fetcherRegistry:             r,
-	}
+    fetchConfigService *service.FetchConfigService,
+    dRepo output.FetchedDataRepository,
+    redditFetcher fetcher.Fetcher[model.RedditFetchConfigDetail],
+) *FetchAndSaveUsecase {
+    return &FetchAndSaveUsecase{
+        fetchConfigService: fetchConfigService,
+        dataRepository:     dRepo,
+        redditFetcher:      redditFetcher,
+    }
 }
 
 func (uc *FetchAndSaveUsecase) Execute(ctx context.Context) error {
-	activeUserIDs, err := uc.userRepository.GetActiveUserIDs(ctx)
+	enrichedConfigs, err := uc.fetchConfigService.GetActiveUsersEnrichedConfigs(ctx)
 	if err != nil {
-		fmt.Errorf("Fail: userRepository.GetActiveUserIDs(ctx)")
+			return fmt.Errorf("failed to get enriched configs: %w", err)
 	}
-	for _, id := range activeUserIDs {
-		userFetchConfigs, err := uc.configRepository.GetByUserID(ctx, id)
-		if err != nil {
-			fmt.Errorf("Fail: configRepository.GetByUserID(ctx, id)")
-		}
 
-		for _, config := range userFetchConfigs {
-			switch config.DataSourceID {
-			case "reddit":
-				redditConfig, err := uc.redditFetchConfigRepository.GetByUserFetchConfigID(ctx, config.ID)
-				if err != nil {
-					fmt.Errorf("Fail: redditFetchConfigRepository.GetByUserFetchConfigID: %v", err, redditConfig)
-					continue
-				}
-			default:
-				fmt.Errorf("unsupported data source: %s", config.DataSourceID)
+	for _, cfg := range enrichedConfigs {
+		switch detail := cfg.Detail.(type) {
+		case model.RedditFetchConfigDetail:
+			data, err := uc.redditFetcher.Fetch(ctx, detail)
+			if err != nil {
+				// エラーログ
+				continue
 			}
 
+			if err := uc.saveData(ctx, cfg.UserFetchConfig.ID, data); err != nil {
+				// エラーログ
+				continue
+			}
+
+		default:
+			// 未対応のデータソースの場合
+			continue
 		}
-	}
+    }
+    return nil
+}
+
+func (uc *FetchAndSaveUsecase) saveData(ctx context.Context, configID uuid.UUID, data interface{}) error {
+    return nil
 }

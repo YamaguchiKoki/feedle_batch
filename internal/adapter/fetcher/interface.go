@@ -1,26 +1,12 @@
 package fetcher
 
-import "github.com/YamaguchiKoki/feedle_batch/internal/domain/model"
+import (
+	"context"
 
-type Fetcher interface {
+	"github.com/YamaguchiKoki/feedle_batch/internal/domain/model"
+)
+
+type Fetcher[T any] interface {
 	Name() string
-
-	Fetch(config FetchConfig) ([]*model.FetchedData, error)
-}
-
-type FetchConfig struct {
-	// Common fields
-	Keywords []string
-	Limit    int
-
-	// Source-specific fields
-	Reddit struct {
-		Subreddits []string
-	}
-	YouTube struct {
-		ChannelIDs []string
-	}
-	HackerNews struct {
-		MinScore int
-	}
+	Fetch(ctx context.Context, config T) ([]*model.FetchedData, error)
 }

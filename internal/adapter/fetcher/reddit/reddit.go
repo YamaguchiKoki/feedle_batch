@@ -1,13 +1,13 @@
 package reddit
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/YamaguchiKoki/feedle_batch/internal/adapter/fetcher"
 	"github.com/YamaguchiKoki/feedle_batch/internal/domain/model"
 	"github.com/samber/lo"
 )
@@ -76,19 +76,18 @@ func (rf *RedditFetcher) Name() string {
 	return "reddit"
 }
 
-func (rf *RedditFetcher) Fetch(config fetcher.FetchConfig) ([]*model.FetchedData, error) {
-	if len(config.Reddit.Subreddits) == 0 && len(config.Keywords) == 0 {
-		return nil, fmt.Errorf("no subreddits or keywords provided")
+func (rf *RedditFetcher) Fetch(ctx context.Context, config model.RedditFetchConfigDetail) ([]*model.FetchedData, error) {
+	if config.Subreddit == nil && len(config.Keywords) == 0 {
+		return nil, fmt.Errorf("no subreddit or keywords provided")
 	}
 
 	var allResults []*model.FetchedData
 
-	// Fetch from subreddits
-	for _, subreddit := range config.Reddit.Subreddits {
-		results, err := rf.fetchSubreddit(subreddit, config.Limit)
+	// Fetch from subreddit
+	if config.Subreddit != nil {
+		results, err := rf.fetchSubreddit(*config.Subreddit, config.LimitCount)
 		if err != nil {
-			fmt.Printf("Error fetching r/%s: %v\n", subreddit, err)
-			continue
+			fmt.Printf("Error fetching r/%s: %v\n", *config.Subreddit, err)
 		}
 		allResults = append(allResults, results...)
 	}
@@ -96,7 +95,7 @@ func (rf *RedditFetcher) Fetch(config fetcher.FetchConfig) ([]*model.FetchedData
 	// Search by keywords
 	if len(config.Keywords) > 0 {
 		query := strings.Join(config.Keywords, " OR ")
-		results, err := rf.search(query, config.Limit)
+		results, err := rf.search(query, config.LimitCount)
 		if err != nil {
 			fmt.Printf("Error searching: %v\n", err)
 		} else {

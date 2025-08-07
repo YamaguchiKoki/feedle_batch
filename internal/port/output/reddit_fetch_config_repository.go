@@ -8,5 +8,5 @@ import (
 )
 
 type RedditFetchConfigRepository interface {
-	GetByUserFetchConfigID(ctx context.Context, userFetchConfigID uuid.UUID) (*model.RedditFetchConfig, error)
+	GetByUserFetchConfigID(ctx context.Context, userFetchConfigID uuid.UUID) (*model.RedditFetchConfigDetail, error)
 }

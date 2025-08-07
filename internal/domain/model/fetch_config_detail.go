@@ -6,8 +6,13 @@ import (
 	"github.com/google/uuid"
 )
 
-type RedditFetchConfig struct {
-	ID                uuid.UUID `json:"id" db:"id"`
+type FetchConfigDetail interface {
+    GetUserFetchConfigID() uuid.UUID
+    GetDataSourceID() string
+}
+
+type RedditFetchConfigDetail struct {
+    ID                uuid.UUID `json:"id" db:"id"`
 	UserFetchConfigID uuid.UUID `json:"user_fetch_config_id" db:"user_fetch_config_id"`
 	Subreddit         *string   `json:"subreddit" db:"subreddit"`
 	SortBy            string    `json:"sort_by" db:"sort_by"`
@@ -17,15 +22,10 @@ type RedditFetchConfig struct {
 	CreatedAt         time.Time `json:"created_at" db:"created_at"`
 }
 
-func NewRedditFetchConfig(userFetchConfigID uuid.UUID, subreddit *string, keywords []string) *RedditFetchConfig {
-	return &RedditFetchConfig{
-		ID:                uuid.New(),
-		UserFetchConfigID: userFetchConfigID,
-		Subreddit:         subreddit,
-		SortBy:            "hot",
-		TimeFilter:        "day",
-		LimitCount:        25,
-		Keywords:          keywords,
-		CreatedAt:         time.Now(),
-	}
+func (r RedditFetchConfigDetail) GetUserFetchConfigID() uuid.UUID {
+    return r.UserFetchConfigID
+}
+
+func (r RedditFetchConfigDetail) GetDataSourceID() string {
+    return "reddit"
 }

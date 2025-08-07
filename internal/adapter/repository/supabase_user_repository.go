@@ -12,8 +12,8 @@ type SupabaseUserRepository struct {
 	client *supabase.Client
 }
 
-func NewSupabaseUserRepository(client *supabase.Client) output.FetchedDataRepository {
-	return &SupabaseFetchedDataRepository{
+func NewSupabaseUserRepository(client *supabase.Client) output.UserRepository {
+	return &SupabaseUserRepository{
 		client: client,
 	}
 }
