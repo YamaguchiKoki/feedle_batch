@@ -74,11 +74,11 @@ func NewContainer() (*do.Injector, error) {
 		redditClientSecret := viper.GetString("REDDIT_CLIENT_SECRET")
 		redditUsername := viper.GetString("REDDIT_USERNAME")
 
+		auth := reddit.NewRedditAuth(redditClientID, redditClientSecret, redditUsername)
+
 		return reddit.NewRedditFetcher(
-			nil,
-			redditClientID,
-			redditClientSecret,
-			redditUsername,
+			"",
+			auth,
 		), nil
 	})
 
