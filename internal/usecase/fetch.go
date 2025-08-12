@@ -31,6 +31,7 @@ func NewFetchAndSaveUsecase(
 }
 
 func (uc *FetchAndSaveUsecase) Execute(ctx context.Context) error {
+	// 検索設定を取得する
 	enrichedConfigs, err := uc.fetchConfigService.GetActiveUsersEnrichedConfigs(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get enriched configs: %w", err)
@@ -56,8 +57,8 @@ func (uc *FetchAndSaveUsecase) Execute(ctx context.Context) error {
 
 func (uc *FetchAndSaveUsecase) fetchData(ctx context.Context, cfg service.EnrichedFetchConfig) ([]*model.FetchedData, error) {
 	switch detail := cfg.Detail.(type) {
-	case model.RedditFetchConfigDetail:
-		return uc.redditFetcher.Fetch(ctx, detail)
+	case *model.RedditFetchConfigDetail:
+		return uc.redditFetcher.Fetch(ctx, *detail)
 	default:
 		return nil, fmt.Errorf("unsupported data source: %s", cfg.UserFetchConfig.DataSourceID)
 	}
@@ -65,9 +66,6 @@ func (uc *FetchAndSaveUsecase) fetchData(ctx context.Context, cfg service.Enrich
 
 func (uc *FetchAndSaveUsecase) saveData(ctx context.Context, configID uuid.UUID, data []*model.FetchedData) error {
 	for _, item := range data {
-		// Set the config ID for each item
-		// item.ConfigID = configID
-
 		if err := uc.dataRepository.Create(ctx, item); err != nil {
 			return fmt.Errorf("failed to save data item: %w", err)
 		}

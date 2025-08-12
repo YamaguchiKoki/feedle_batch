@@ -7,5 +7,5 @@ import (
 )
 
 type FetchConfigRepository interface {
-	GetByUserID(ctx context.Context, userID model.UserID) ([]*model.UserFetchConfig, error)
+	GetByUserID(ctx context.Context, userID model.UserID) ([]model.UserFetchConfig, error)
 }

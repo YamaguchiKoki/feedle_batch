@@ -101,10 +101,10 @@ func (rf *RedditFetcher) Fetch(ctx context.Context, config model.RedditFetchConf
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch subreddit posts: %w", err)
 		}
-		// Set ConfigID for all posts
+		// Set ConfigID for all posts (use UserFetchConfigID, not the reddit config ID)
 		for _, post := range posts {
 			if post != nil {
-				post.ConfigID = config.ID
+				post.ConfigID = config.UserFetchConfigID
 			}
 		}
 		return posts, nil
@@ -129,10 +129,10 @@ func (rf *RedditFetcher) Fetch(ctx context.Context, config model.RedditFetchConf
 			continue
 		}
 
-		// Set ConfigID for all posts
+		// Set ConfigID for all posts (use UserFetchConfigID, not the reddit config ID)
 		for _, post := range posts {
 			if post != nil {
-				post.ConfigID = config.ID
+				post.ConfigID = config.UserFetchConfigID
 			}
 		}
 

@@ -31,8 +31,9 @@ func NewFetchConfigService(
 	}
 }
 
-// 全てのアクティブユーザーの取得設定を取得する
+
 func (s *FetchConfigService) GetActiveUsersEnrichedConfigs(ctx context.Context) ([]EnrichedFetchConfig, error) {
+	// 対象ユーザーのIDを取得。ユーザー数が増えてくるとuser_statsテーブルを追加して、休眠ユーザーは対象外にする予定
 	activeUserIDs, err := s.userRepo.GetActiveUserIDs(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get active users: %w", err)
@@ -44,6 +45,7 @@ func (s *FetchConfigService) GetActiveUsersEnrichedConfigs(ctx context.Context) 
 		userConfigs, err := s.GetUserEnrichedConfigs(ctx, userID)
 		if err != nil {
 			// エラーログを記録して続行
+			fmt.Println("error", err)
 			continue
 		}
 		allConfigs = append(allConfigs, userConfigs...)
@@ -62,18 +64,15 @@ func (s *FetchConfigService) GetUserEnrichedConfigs(ctx context.Context, userID 
 	enrichedConfigs := make([]EnrichedFetchConfig, 0, len(configs))
 
 	for _, config := range configs {
-		if !config.IsActive {
-			continue
-		}
-
-		detail, err := s.getConfigDetail(ctx, *config)
+		// データソース固有の検索設定を取得する
+		detail, err := s.getConfigDetail(ctx, config)
 		if err != nil {
-			// エラーログを記録して続行
+			fmt.Println("error occurred", err)
 			continue
 		}
 
 		enrichedConfigs = append(enrichedConfigs, EnrichedFetchConfig{
-			UserFetchConfig: *config,
+			UserFetchConfig: config,
 			Detail:          detail,
 		})
 	}
@@ -87,6 +86,6 @@ func (s *FetchConfigService) getConfigDetail(ctx context.Context, config model.U
 	case "reddit":
 		return s.redditFetchConfigRepo.GetByUserFetchConfigID(ctx, config.ID)
 	default:
-		return nil, fmt.Errorf("unsupported data source: %s", config.DataSourceID)
+		return nil, fmt.Errorf("unsupported data source: '%s' (length: %d)", config.DataSourceID, len(config.DataSourceID))
 	}
 }
