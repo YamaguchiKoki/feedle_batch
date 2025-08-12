@@ -15,11 +15,7 @@ pre-commit:
 
     - name: golangci-lint
       glob: "*.go"
-      run: |
-        for file in {staged_files}; do
-          dir=$(dirname "$file")
-          golangci-lint run --fix "$dir"
-        done
+      run: mise run lint
 
     - name: govet
       glob: "*.go"
